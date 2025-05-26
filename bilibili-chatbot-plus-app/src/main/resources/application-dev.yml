@@ -1,0 +1,18 @@
+server:
+  port: 7001
+
+# 通义千问配置
+qwen:
+  api-key:
+
+# b站配置
+bilibili-chatbot-plus:
+  login_id:
+  cookle:
+  csrf:
+
+# 日志
+logging:
+  level:
+    root: info
+  config: classpath:logback-spring.xml
