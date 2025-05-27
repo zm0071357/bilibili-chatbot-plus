@@ -68,6 +68,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
+        <dependency>
+            <groupId>top.xiaoming-programming</groupId>
+            <artifactId>qwen-sdk</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -107,7 +111,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>bilibili.chatbot.plus.Application</mainClass>
+                    <mainClass>com.bilibili.chatbot.plus.Application</mainClass>
                     <layout>JAR</layout>
                 </configuration>
             </plugin>

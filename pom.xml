@@ -116,6 +116,24 @@
                 <version>2.17.0</version>
             </dependency>
 
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.13.2</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>4.5.14</version>
+            </dependency>
+
+            <dependency>
+                <groupId>top.xiaoming-programming</groupId>
+                <artifactId>qwen-sdk</artifactId>
+                <version>1.0</version>
+            </dependency>
             <!--功能模块-->
             <dependency>
                 <groupId>top.xiaoming-programming</groupId>

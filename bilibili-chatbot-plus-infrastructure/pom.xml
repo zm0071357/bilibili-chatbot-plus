@@ -17,4 +17,11 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>top.xiaoming-programming</groupId>
+            <artifactId>bilibili-chatbot-plus-domain</artifactId>
+        </dependency>
+    </dependencies>
+
 </project>
