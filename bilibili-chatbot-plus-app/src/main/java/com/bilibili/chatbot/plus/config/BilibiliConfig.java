@@ -45,7 +45,7 @@ public class BilibiliConfig {
 
     @Bean("bilibiliService")
     public BilibiliServiceImpl bilibiliService() {
-        return new BilibiliServiceImpl(properties.getCookie(), properties.getSessionType(), properties.getSize(), properties.getMobiApp());
+        return new BilibiliServiceImpl(properties.getLoginId(), properties.getCookie(), properties.getCsrf(), properties.getSessionType(), properties.getSize(), properties.getMobiApp());
     }
 
     @Bean("bilibiliRepository")
@@ -57,6 +57,6 @@ public class BilibiliConfig {
                 .addConverterFactory(JacksonConverterFactory.create())
                 .build()
                 .create(BilibiliRepository.class);
-        return new BilibiliRepositoryImpl(bilibiliRepository);
+        return new BilibiliRepositoryImpl(bilibiliRepository, properties.getLoginId());
     }
 }

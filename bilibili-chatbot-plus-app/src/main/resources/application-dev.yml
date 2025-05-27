@@ -5,7 +5,7 @@ server:
 qwen:
   config:
    enable: true
-   api-key: "sk-bfb2654340464adda7e2e50d425cb974"
+   api-key:
 
 # b站配置
 bilibili:
@@ -14,7 +14,7 @@ bilibili:
       config:
         url: "https://api.vc.bilibili.com"
         login_id:
-        cookie: "SESSDATA=b77e5d74%2C1763796847%2Ce51df%2A51CjAlm6TUn9iY8LFMqNtZ6mTNgu4ScOWj-QgFJHXlBarGX3oYYueUnX2axlYCrArI1FESVkMzZW9ZM0JMX0I0NUtCekhoUGN1SS1scGswaVhWaFBTMVlreHgwcGhHbjRSQU44aTJNX0VMWmxXQ25CZTRRUjBDUmNaQlZBT2RfRG04dHZDVnZ6VUJ3IIEC; bili_jct=cc459a36cc52f8685e369721601ef177"
+        cookie:
         csrf:
         session_type: 1
         size: 100

@@ -25,6 +25,6 @@ public interface BilibiliService {
      * @param unHandleSessionLists 未回复对话列表
      * @return
      */
-    void handle(List<SessionsEntity.Data.SessionList> unHandleSessionLists);
+    void handle(List<SessionsEntity.Data.SessionList> unHandleSessionLists) throws IOException;
 
 }

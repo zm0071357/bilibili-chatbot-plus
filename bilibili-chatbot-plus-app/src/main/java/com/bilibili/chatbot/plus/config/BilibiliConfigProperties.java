@@ -10,7 +10,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "bilibili.chatbot.plus.config", ignoreInvalidFields = true)
 public class BilibiliConfigProperties {
     private String url;
-    private String loginId;
+    private long loginId;
     private String cookie;
     private String csrf;
     private Integer sessionType;

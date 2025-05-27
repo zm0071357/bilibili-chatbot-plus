@@ -1,5 +1,6 @@
 package com.bilibili.chatbot.plus.domain.bilibili.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
@@ -70,6 +71,7 @@ public class SessionsEntity {
                 private int msg_status;
                 private String notify_code;
                 private int msg_source;
+                private int new_face_version;
             }
         }
 
