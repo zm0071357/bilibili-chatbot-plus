@@ -9,6 +9,7 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import qwen.sdk.largemodel.chat.impl.ChatServiceImpl;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.jackson.JacksonConverterFactory;
@@ -62,8 +63,8 @@ public class BilibiliConfig {
     }
 
     @Bean("bilibiliRepositoryImpl")
-    public BilibiliRepositoryImpl bilibiliRepository() {
-        return new BilibiliRepositoryImpl(properties.getLoginId());
+    public BilibiliRepositoryImpl bilibiliRepository(ChatServiceImpl chatServiceImpl) {
+        return new BilibiliRepositoryImpl(properties.getLoginId(), chatServiceImpl);
     }
 
 }

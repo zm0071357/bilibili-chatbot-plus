@@ -9,6 +9,7 @@ import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SessionsEntity;
 import com.bilibili.chatbot.plus.domain.bilibili.model.valobj.Content;
 import com.bilibili.chatbot.plus.domain.bilibili.model.valobj.MessageConstant;
 import com.bilibili.chatbot.plus.domain.bilibili.model.valobj.MessageTypeEnum;
+import com.bilibili.chatbot.plus.domain.qwen.model.QwenResponseEntity;
 import lombok.extern.slf4j.Slf4j;
 import retrofit2.Call;
 import retrofit2.Response;
@@ -64,21 +65,27 @@ public class BilibiliServiceImpl implements BilibiliService {
             // 参数
             long senderUid = unHandleSessionList.getLastMsg().getSender_uid();
             String contentJSON = unHandleSessionList.getLastMsg().getContent();
-            String content = JSON.parseObject(contentJSON, Content.class).getContent();
+            Content content = JSON.parseObject(contentJSON, Content.class);
+            String question = content.getContent();
             int msgType = unHandleSessionList.getLastMsg().getMsg_type();
             if (MessageTypeEnum.TEXT.getType().equals(msgType)) {
-                log.info("获取到用户的文字消息:{},{}", senderUid, content);
+                log.info("获取到用户的文字消息:{},{}", senderUid, question);
                 // 预处理
-                SendMessageResponseEntity response = sendMessage(senderUid, receiverType, MessageConstant.TEXT_MESSAGE);
-                log.info("给用户发送预处理消息:{}, code:{}", senderUid, response.getCode());
+                SendMessageResponseEntity PreResponse = sendMessage(senderUid, receiverType, MessageConstant.TEXT_MESSAGE);
+                log.info("给用户发送预处理消息:{}, code:{}", senderUid, PreResponse.getCode());
+                // 调用大模型
+                QwenResponseEntity res = bilibiliRepository.handle(question);
+                log.info("大模型处理结果:{},{}", senderUid, res.getResult());
+                // 结果写回
+                SendMessageResponseEntity response = sendMessage(senderUid, receiverType, res.getResult());
+                log.info("给用户发送处理消息:{}, code:{}", senderUid, response.getCode());
             }
         }
     }
 
     @Override
     public SendMessageResponseEntity sendMessage(long receiverId, Integer msgType, String content) throws IOException {
-        String newContent = "{\"content\":\"" + content + "\"}";
-        Call<SendMessageResponseEntity> call = bilibiliPort.sendMessage(cookie, loginId, receiverId, receiverType, msgType, devId, timestamp, newContent, csrf, csrf);
+        Call<SendMessageResponseEntity> call = bilibiliPort.sendMessage(cookie, loginId, receiverId, receiverType, msgType, devId, timestamp, MessageConstant.getContent(content), csrf, csrf);
         Response<SendMessageResponseEntity> response = call.execute();
         return response.body();
     }
