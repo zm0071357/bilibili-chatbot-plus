@@ -1,5 +1,6 @@
 package com.bilibili.chatbot.plus.domain.bilibili;
 
+import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SendMessageResponseEntity;
 import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SessionsEntity;
 
 import java.io.IOException;
@@ -26,5 +27,15 @@ public interface BilibiliService {
      * @return
      */
     void handle(List<SessionsEntity.Data.SessionList> unHandleSessionLists) throws IOException;
+
+    /**
+     * 发送消息
+     * @param receiverId
+     * @param msgType
+     * @param content
+     * @return
+     * @throws IOException
+     */
+    SendMessageResponseEntity sendMessage(long receiverId, Integer msgType, String content) throws IOException;
 
 }

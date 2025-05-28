@@ -22,6 +22,11 @@
             <groupId>top.xiaoming-programming</groupId>
             <artifactId>bilibili-chatbot-plus-domain</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>top.xiaoming-programming</groupId>
+            <artifactId>qwen-sdk</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

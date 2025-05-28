@@ -34,6 +34,10 @@
             <groupId>top.xiaoming-programming</groupId>
             <artifactId>bilibili-chatbot-plus-domain</artifactId>
         </dependency>
+        <dependency>
+            <groupId>top.xiaoming-programming</groupId>
+            <artifactId>bilibili-chatbot-plus-infrastructure</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

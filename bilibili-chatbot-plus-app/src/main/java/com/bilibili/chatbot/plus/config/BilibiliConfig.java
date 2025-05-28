@@ -1,13 +1,11 @@
 package com.bilibili.chatbot.plus.config;
 
-import com.bilibili.chatbot.plus.infrastructure.adapter.repository.BilibiliRepositoryImpl;
-import com.bilibili.chatbot.plus.domain.bilibili.adapter.repository.BilibiliRepository;
+import com.bilibili.chatbot.plus.domain.bilibili.adapter.port.BilibiliPort;
 import com.bilibili.chatbot.plus.domain.bilibili.serivce.BilibiliServiceImpl;
+import com.bilibili.chatbot.plus.infrastructure.adapter.repository.BilibiliRepositoryImpl;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,8 +19,6 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 @EnableConfigurationProperties(BilibiliConfigProperties.class)
 public class BilibiliConfig {
-
-    private final Logger logger = LoggerFactory.getLogger(BilibiliConfig.class);
 
     private final OkHttpClient httpClient;
 
@@ -45,18 +41,29 @@ public class BilibiliConfig {
 
     @Bean("bilibiliService")
     public BilibiliServiceImpl bilibiliService() {
-        return new BilibiliServiceImpl(properties.getLoginId(), properties.getCookie(), properties.getCsrf(), properties.getSessionType(), properties.getSize(), properties.getMobiApp());
-    }
-
-    @Bean("bilibiliRepository")
-    public BilibiliRepositoryImpl bilibiliRepository() {
-        BilibiliRepository bilibiliRepository = new Retrofit.Builder()
+        BilibiliPort bilibiliPort = new Retrofit.Builder()
                 .baseUrl(properties.getUrl())
                 .client(httpClient)
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .addConverterFactory(JacksonConverterFactory.create())
                 .build()
-                .create(BilibiliRepository.class);
-        return new BilibiliRepositoryImpl(bilibiliRepository, properties.getLoginId());
+                .create(BilibiliPort.class);
+        log.info("b站AI助手对话服务装配完成");
+        return new BilibiliServiceImpl(bilibiliPort,
+                properties.getLoginId(),
+                properties.getCookie(),
+                properties.getCsrf(),
+                properties.getSessionType(),
+                properties.getSize(),
+                properties.getMobiApp(),
+                properties.getReceiverType(),
+                properties.getDevId(),
+                properties.getTimestamp());
     }
+
+    @Bean("bilibiliRepositoryImpl")
+    public BilibiliRepositoryImpl bilibiliRepository() {
+        return new BilibiliRepositoryImpl(properties.getLoginId());
+    }
+
 }

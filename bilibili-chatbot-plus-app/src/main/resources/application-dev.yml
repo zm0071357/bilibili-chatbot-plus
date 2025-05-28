@@ -3,9 +3,10 @@ server:
 
 # 通义千问配置
 qwen:
-  config:
-   enable: true
-   api-key:
+  sdk:
+    config:
+     enable: true
+     api-key:
 
 # b站配置
 bilibili:
@@ -13,6 +14,7 @@ bilibili:
     plus:
       config:
         url: "https://api.vc.bilibili.com"
+        send_image_url: "https://api.bilibili.com"
         login_id:
         cookie:
         csrf:
