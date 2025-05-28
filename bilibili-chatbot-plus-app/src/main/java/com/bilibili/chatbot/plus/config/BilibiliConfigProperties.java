@@ -20,8 +20,6 @@ public class BilibiliConfigProperties {
     private Integer size;
     private String mobiApp;
     private Integer receiverType = 1;
-    private String devId = UUID.randomUUID().toString();
-    private long timestamp = System.currentTimeMillis();
     private HttpLoggingInterceptor.Level level = HttpLoggingInterceptor.Level.HEADERS;
     private long connectTimeOut = 60;
     private long writeTimeOut = 60;

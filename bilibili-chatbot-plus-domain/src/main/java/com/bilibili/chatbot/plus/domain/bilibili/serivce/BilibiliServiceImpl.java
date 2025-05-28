@@ -17,6 +17,7 @@ import retrofit2.Response;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 public class BilibiliServiceImpl implements BilibiliService {
@@ -31,10 +32,8 @@ public class BilibiliServiceImpl implements BilibiliService {
     private final Integer size;
     private final String mobiApp;
     private final Integer receiverType;
-    private final String devId;
-    private final long timestamp;
 
-    public BilibiliServiceImpl(BilibiliPort bilibiliPort, long loginId, String cookie, String csrf, Integer sessionType, Integer size, String mobiApp, Integer receiverType, String devId, long timestamp) {
+    public BilibiliServiceImpl(BilibiliPort bilibiliPort, long loginId, String cookie, String csrf, Integer sessionType, Integer size, String mobiApp, Integer receiverType) {
         this.bilibiliPort = bilibiliPort;
         this.loginId = loginId;
         this.cookie = cookie;
@@ -43,8 +42,6 @@ public class BilibiliServiceImpl implements BilibiliService {
         this.size = size;
         this.mobiApp = mobiApp;
         this.receiverType = receiverType;
-        this.devId = devId;
-        this.timestamp = timestamp;
     }
 
     @Override
@@ -71,13 +68,13 @@ public class BilibiliServiceImpl implements BilibiliService {
             if (MessageTypeEnum.TEXT.getType().equals(msgType)) {
                 log.info("获取到用户的文字消息:{},{}", senderUid, question);
                 // 预处理
-                SendMessageResponseEntity PreResponse = sendMessage(senderUid, receiverType, MessageConstant.TEXT_MESSAGE);
+                SendMessageResponseEntity PreResponse = sendMessage(senderUid, msgType, MessageConstant.TEXT_MESSAGE);
                 log.info("给用户发送预处理消息:{}, code:{}", senderUid, PreResponse.getCode());
                 // 调用大模型
-                QwenResponseEntity res = bilibiliRepository.handle(question);
+                QwenResponseEntity res = bilibiliRepository.handle(senderUid, question);
                 log.info("大模型处理结果:{},{}", senderUid, res.getResult());
                 // 结果写回
-                SendMessageResponseEntity response = sendMessage(senderUid, receiverType, res.getResult());
+                SendMessageResponseEntity response = sendMessage(senderUid, msgType, res.getResult());
                 log.info("给用户发送处理消息:{}, code:{}", senderUid, response.getCode());
             }
         }
@@ -85,6 +82,9 @@ public class BilibiliServiceImpl implements BilibiliService {
 
     @Override
     public SendMessageResponseEntity sendMessage(long receiverId, Integer msgType, String content) throws IOException {
+        String devId = UUID.randomUUID().toString();
+        long timestamp = System.currentTimeMillis();
+        System.out.println(MessageConstant.getContent(content));
         Call<SendMessageResponseEntity> call = bilibiliPort.sendMessage(cookie, loginId, receiverId, receiverType, msgType, devId, timestamp, MessageConstant.getContent(content), csrf, csrf);
         Response<SendMessageResponseEntity> response = call.execute();
         return response.body();

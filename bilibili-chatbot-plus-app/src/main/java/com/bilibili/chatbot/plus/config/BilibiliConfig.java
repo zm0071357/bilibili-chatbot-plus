@@ -49,7 +49,7 @@ public class BilibiliConfig {
                 .addConverterFactory(JacksonConverterFactory.create())
                 .build()
                 .create(BilibiliPort.class);
-        log.info("b站AI助手对话服务装配完成");
+        log.info("b站AI助手服务装配完成");
         return new BilibiliServiceImpl(bilibiliPort,
                 properties.getLoginId(),
                 properties.getCookie(),
@@ -57,9 +57,7 @@ public class BilibiliConfig {
                 properties.getSessionType(),
                 properties.getSize(),
                 properties.getMobiApp(),
-                properties.getReceiverType(),
-                properties.getDevId(),
-                properties.getTimestamp());
+                properties.getReceiverType());
     }
 
     @Bean("bilibiliRepositoryImpl")

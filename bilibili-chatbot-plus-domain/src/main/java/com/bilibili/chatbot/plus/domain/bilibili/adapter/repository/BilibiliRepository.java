@@ -10,6 +10,6 @@ public interface BilibiliRepository {
 
     List<SessionsEntity.Data.SessionList> getUnHandleSessionLists(List<SessionsEntity.Data.SessionList> sessionLists);
 
-    QwenResponseEntity handle(String question) throws IOException;
+    QwenResponseEntity handle(long userId, String question) throws IOException;
 
 }
