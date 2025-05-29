@@ -9,6 +9,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Content {
-    private String content;
+public class ImageContent {
+
+    private Integer height;
+    private Integer width;
+    private String imageType;
+    private Integer original;
+    private Integer size;
+    private String url;
+
 }

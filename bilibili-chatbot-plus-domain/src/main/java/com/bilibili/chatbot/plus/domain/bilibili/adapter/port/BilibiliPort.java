@@ -10,14 +10,14 @@ import java.io.IOException;
 public interface BilibiliPort {
 
     @GET("/session_svr/v1/session_svr/get_sessions")
-    @Headers("Content-Type: application/json; charset=utf-8")
+    @Headers("TextContent-Type: application/json; charset=utf-8")
     Call<SessionsEntity> getSessions(@Header("Cookie") String cookie,
                                      @Query("session_type") Integer sessionType,
                                      @Query("size") Integer size,
                                      @Query("mobi_app") String mobiApp) throws IOException;
 
     @POST("/web_im/v1/web_im/send_msg")
-    @Headers("Content-Type: application/x-www-form-urlencoded")
+    @Headers("TextContent-Type: application/x-www-form-urlencoded")
     Call<SendMessageResponseEntity> sendMessage(@Header("Cookie") String cookie,
                                                 @Query("msg[sender_uid]") long sendUid,
                                                 @Query("msg[receiver_id]") long receiverId,

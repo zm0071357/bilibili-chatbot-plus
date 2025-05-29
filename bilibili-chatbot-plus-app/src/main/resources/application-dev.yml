@@ -14,7 +14,6 @@ bilibili:
     plus:
       config:
         url: "https://api.vc.bilibili.com"
-        send_image_url: "https://api.bilibili.com"
         login_id:
         cookie:
         csrf:

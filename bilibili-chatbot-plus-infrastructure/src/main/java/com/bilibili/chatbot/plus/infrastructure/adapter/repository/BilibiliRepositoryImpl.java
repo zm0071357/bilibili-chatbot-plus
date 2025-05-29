@@ -3,6 +3,7 @@ package com.bilibili.chatbot.plus.infrastructure.adapter.repository;
 import com.alibaba.fastjson.JSON;
 import com.bilibili.chatbot.plus.domain.bilibili.adapter.repository.BilibiliRepository;
 import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SessionsEntity;
+import com.bilibili.chatbot.plus.domain.bilibili.model.valobj.ContentTypeEnum;
 import com.bilibili.chatbot.plus.domain.bilibili.model.valobj.MessageConstant;
 import com.bilibili.chatbot.plus.domain.qwen.model.QwenResponseEntity;
 import lombok.extern.slf4j.Slf4j;
@@ -42,12 +43,24 @@ public class BilibiliRepositoryImpl implements BilibiliRepository{
     }
 
     @Override
-    public QwenResponseEntity handle(long userId, String question) throws IOException {
+    public QwenResponseEntity handle(long userId, String question, String sign) throws IOException {
         List<ChatRequest.Input.Message> messages = getHistory(userId);
+        List<ChatRequest.Input.Message.Content> userContent = new ArrayList<>();
+        if (ContentTypeEnum.TEXT.getSign().equals(sign)) {
+            userContent.add(ChatRequest.Input.Message.Content.builder()
+                    .text(question)
+                    .build());
+        } else if (ContentTypeEnum.IMAGE.getSign().equals(sign)) {
+            userContent.add(ChatRequest.Input.Message.Content.builder()
+                    .image(question)
+                    .build());
+            userContent.add(ChatRequest.Input.Message.Content.builder().text(MessageConstant.DES_IMAGE_MESSAGE).build());
+        }
         messages.add(ChatRequest.Input.Message.builder()
                 .role("user")
-                .content(question)
+                .content(userContent)
                 .build());
+
         ChatRequest request = ChatRequest.builder()
                 .model(ChatModelEnum.QWEN_VL_PLUS.getModel())
                 .input(ChatRequest.Input.builder()
@@ -68,7 +81,7 @@ public class BilibiliRepositoryImpl implements BilibiliRepository{
         String result = String.valueOf(response.getOutput().getChoices().get(0).getMessage().getContent().get(0).getText());
         log.info("返回结果:{}", JSON.toJSONString(response));
         // 添加历史记录
-        // 后续调用失败的话，将message删除
+        // 后续调用失败的话，删除本次两条message
         messages.add(ChatRequest.Input.Message.builder()
                 .role("system")
                 .content(result)
@@ -86,7 +99,7 @@ public class BilibiliRepositoryImpl implements BilibiliRepository{
      * @param userId
      * @return
      */
-    public List<ChatRequest.Input.Message> getHistory(long userId) {
+    private List<ChatRequest.Input.Message> getHistory(long userId) {
         return history.getOrDefault(userId, defaultHistory(userId));
     }
 
@@ -98,9 +111,11 @@ public class BilibiliRepositoryImpl implements BilibiliRepository{
     private List<ChatRequest.Input.Message> defaultHistory(long userId) {
         log.info("用户初次对话，创建历史记录:{}", userId);
         List<ChatRequest.Input.Message> messages = new ArrayList<>();
+        List<ChatRequest.Input.Message.Content> systemContent = new ArrayList<>();
+        systemContent.add(ChatRequest.Input.Message.Content.builder().text(MessageConstant.DEFAULT_MESSAGE).build());
         messages.add(ChatRequest.Input.Message.builder()
                 .role("system")
-                .content(MessageConstant.DEFAULT_MESSAGE)
+                .content(systemContent)
                 .build());
         return messages;
     }

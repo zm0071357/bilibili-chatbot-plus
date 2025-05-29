@@ -6,9 +6,7 @@ import com.bilibili.chatbot.plus.domain.bilibili.adapter.port.BilibiliPort;
 import com.bilibili.chatbot.plus.domain.bilibili.adapter.repository.BilibiliRepository;
 import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SendMessageResponseEntity;
 import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SessionsEntity;
-import com.bilibili.chatbot.plus.domain.bilibili.model.valobj.Content;
-import com.bilibili.chatbot.plus.domain.bilibili.model.valobj.MessageConstant;
-import com.bilibili.chatbot.plus.domain.bilibili.model.valobj.MessageTypeEnum;
+import com.bilibili.chatbot.plus.domain.bilibili.model.valobj.*;
 import com.bilibili.chatbot.plus.domain.qwen.model.QwenResponseEntity;
 import lombok.extern.slf4j.Slf4j;
 import retrofit2.Call;
@@ -62,19 +60,39 @@ public class BilibiliServiceImpl implements BilibiliService {
             // 参数
             long senderUid = unHandleSessionList.getLastMsg().getSender_uid();
             String contentJSON = unHandleSessionList.getLastMsg().getContent();
-            Content content = JSON.parseObject(contentJSON, Content.class);
-            String question = content.getContent();
+            String question = null;
+            if (contentJSON.contains(ContentTypeEnum.TEXT.getType())) {
+                TextContent textContent = JSON.parseObject(contentJSON, TextContent.class);
+                question = textContent.getContent();
+            } else if (contentJSON.contains(ContentTypeEnum.IMAGE.getType())) {
+                ImageContent imageContent = JSON.parseObject(contentJSON, ImageContent.class);
+                question = imageContent.getUrl();
+            }
             int msgType = unHandleSessionList.getLastMsg().getMsg_type();
+            // 文字消息
             if (MessageTypeEnum.TEXT.getType().equals(msgType)) {
                 log.info("获取到用户的文字消息:{},{}", senderUid, question);
                 // 预处理
-                SendMessageResponseEntity PreResponse = sendMessage(senderUid, msgType, MessageConstant.TEXT_MESSAGE);
+                SendMessageResponseEntity PreResponse = sendMessage(senderUid, MessageTypeEnum.TEXT.getType(), MessageConstant.PRE_MESSAGE);
                 log.info("给用户发送预处理消息:{}, code:{}", senderUid, PreResponse.getCode());
                 // 调用大模型
-                QwenResponseEntity res = bilibiliRepository.handle(senderUid, question);
+                QwenResponseEntity res = bilibiliRepository.handle(senderUid, question, ContentTypeEnum.TEXT.getSign());
                 log.info("大模型处理结果:{},{}", senderUid, res.getResult());
                 // 结果写回
-                SendMessageResponseEntity response = sendMessage(senderUid, msgType, res.getResult());
+                SendMessageResponseEntity response = sendMessage(senderUid, MessageTypeEnum.TEXT.getType(), res.getResult());
+                log.info("给用户发送处理消息:{}, code:{}", senderUid, response.getCode());
+            }
+            // 图片消息/自定义表情消息
+            else if (MessageTypeEnum.IMAGE.getType().equals(msgType) || MessageTypeEnum.CUSTOM_EMOJI.getType().equals(msgType)) {
+                log.info("获取到用户的图片消息:{},{}", senderUid, question);
+                // 预处理
+                SendMessageResponseEntity PreResponse = sendMessage(senderUid, MessageTypeEnum.TEXT.getType(), MessageConstant.PRE_MESSAGE);
+                log.info("给用户发送预处理消息:{}, code:{}", senderUid, PreResponse.getCode());
+                // 调用大模型
+                QwenResponseEntity res = bilibiliRepository.handle(senderUid, question, ContentTypeEnum.IMAGE.getSign());
+                log.info("大模型处理结果:{},{}", senderUid, res.getResult());
+                // 结果写回
+                SendMessageResponseEntity response = sendMessage(senderUid, MessageTypeEnum.TEXT.getType(), res.getResult());
                 log.info("给用户发送处理消息:{}, code:{}", senderUid, response.getCode());
             }
         }
