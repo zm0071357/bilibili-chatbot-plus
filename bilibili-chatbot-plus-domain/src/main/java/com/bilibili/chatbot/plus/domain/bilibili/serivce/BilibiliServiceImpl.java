@@ -3,7 +3,9 @@ package com.bilibili.chatbot.plus.domain.bilibili.serivce;
 import com.alibaba.fastjson.JSON;
 import com.bilibili.chatbot.plus.domain.bilibili.BilibiliService;
 import com.bilibili.chatbot.plus.domain.bilibili.adapter.port.BilibiliPort;
+import com.bilibili.chatbot.plus.domain.bilibili.adapter.port.BilibiliVideoPort;
 import com.bilibili.chatbot.plus.domain.bilibili.adapter.repository.BilibiliRepository;
+import com.bilibili.chatbot.plus.domain.bilibili.model.entity.AnalysisVideoEntity;
 import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SendMessageResponseEntity;
 import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SessionsEntity;
 import com.bilibili.chatbot.plus.domain.bilibili.model.valobj.*;
@@ -23,6 +25,7 @@ public class BilibiliServiceImpl implements BilibiliService {
     @Resource
     private BilibiliRepository bilibiliRepository;
     private final BilibiliPort bilibiliPort;
+    private final BilibiliVideoPort bilibiliVideoPort;
     private final long loginId;
     private final String cookie;
     private final String csrf;
@@ -31,8 +34,9 @@ public class BilibiliServiceImpl implements BilibiliService {
     private final String mobiApp;
     private final Integer receiverType;
 
-    public BilibiliServiceImpl(BilibiliPort bilibiliPort, long loginId, String cookie, String csrf, Integer sessionType, Integer size, String mobiApp, Integer receiverType) {
+    public BilibiliServiceImpl(BilibiliPort bilibiliPort, BilibiliVideoPort bilibiliVideoPort, long loginId, String cookie, String csrf, Integer sessionType, Integer size, String mobiApp, Integer receiverType) {
         this.bilibiliPort = bilibiliPort;
+        this.bilibiliVideoPort = bilibiliVideoPort;
         this.loginId = loginId;
         this.cookie = cookie;
         this.csrf = csrf;
@@ -59,16 +63,22 @@ public class BilibiliServiceImpl implements BilibiliService {
         for (SessionsEntity.Data.SessionList unHandleSessionList : unHandleSessionLists) {
             // 参数
             long senderUid = unHandleSessionList.getLastMsg().getSender_uid();
+            int msgType = unHandleSessionList.getLastMsg().getMsg_type();
             String contentJSON = unHandleSessionList.getLastMsg().getContent();
             String question = null;
+            ShareContent shareContent = null;
+
+            // 转换消息实体
             if (contentJSON.contains(ContentTypeEnum.TEXT.getType())) {
                 TextContent textContent = JSON.parseObject(contentJSON, TextContent.class);
                 question = textContent.getContent();
             } else if (contentJSON.contains(ContentTypeEnum.IMAGE.getType())) {
                 ImageContent imageContent = JSON.parseObject(contentJSON, ImageContent.class);
                 question = imageContent.getUrl();
+            } else if (contentJSON.contains(ContentTypeEnum.SHARE.getType())) {
+                shareContent = JSON.parseObject(contentJSON, ShareContent.class);
             }
-            int msgType = unHandleSessionList.getLastMsg().getMsg_type();
+
             // 文字消息
             if (MessageTypeEnum.TEXT.getType().equals(msgType)) {
                 log.info("获取到用户的文字消息:{},{}", senderUid, question);
@@ -95,6 +105,27 @@ public class BilibiliServiceImpl implements BilibiliService {
                 SendMessageResponseEntity response = sendMessage(senderUid, MessageTypeEnum.TEXT.getType(), res.getResult());
                 log.info("给用户发送处理消息:{}, code:{}", senderUid, response.getCode());
             }
+            // 分享消息-视频总结
+            else if (MessageTypeEnum.SHARE.getType().equals(msgType)) {
+                log.info("获取到用户的分享消息:{},{}", senderUid, JSON.toJSON(shareContent));
+                // 预处理
+                SendMessageResponseEntity PreResponse = sendMessage(senderUid, MessageTypeEnum.TEXT.getType(), MessageConstant.PRE_MESSAGE);
+                log.info("给用户发送预处理消息:{}, code:{}", senderUid, PreResponse.getCode());
+                // 获取在线视频链接
+                String onlineLink = getOnlineLink(shareContent.getVideoUrl(shareContent.getBvid()));
+                shareContent.setOnlineLink(onlineLink);
+                // 调用大模型
+                QwenResponseEntity res = bilibiliRepository.handle(senderUid, shareContent);
+                log.info("大模型处理结果:{},{}", senderUid, res.getResult());
+                // 结果写回
+                SendMessageResponseEntity response = sendMessage(senderUid, MessageTypeEnum.TEXT.getType(), res.getResult());
+                log.info("给用户发送处理消息:{}, code:{}", senderUid, response.getCode());
+            }
+            // 其他类型消息
+            else {
+                SendMessageResponseEntity response = sendMessage(senderUid, MessageTypeEnum.TEXT.getType(), MessageConstant.UNKNOWN_MESSAGE);
+                log.info("给用户发送处理消息:{}, code:{}", senderUid, response.getCode());
+            }
         }
     }
 
@@ -107,4 +138,14 @@ public class BilibiliServiceImpl implements BilibiliService {
         Response<SendMessageResponseEntity> response = call.execute();
         return response.body();
     }
+
+    private String getOnlineLink(String url) throws IOException {
+        Call<AnalysisVideoEntity> call = bilibiliVideoPort.analysis(url);
+        Response<AnalysisVideoEntity> response = call.execute();
+        AnalysisVideoEntity analysisVideoEntity = response.body();
+        log.info("url解析结果:{}", analysisVideoEntity.getData().getUrl());
+        return analysisVideoEntity.getData().getUrl();
+    }
+
+
 }

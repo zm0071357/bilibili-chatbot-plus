@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class ImageContent {
-
     private Integer height;
     private Integer width;
     private String imageType;

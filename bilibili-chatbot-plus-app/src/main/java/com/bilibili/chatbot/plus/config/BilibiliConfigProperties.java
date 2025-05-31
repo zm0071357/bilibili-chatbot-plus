@@ -12,6 +12,7 @@ import java.util.UUID;
 public class BilibiliConfigProperties {
 
     private String url;
+    private String analysisVideoUrl;
     private String sendImageUrl;
     private long loginId;
     private String cookie;

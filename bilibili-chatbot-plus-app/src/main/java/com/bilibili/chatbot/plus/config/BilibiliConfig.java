@@ -1,6 +1,7 @@
 package com.bilibili.chatbot.plus.config;
 
 import com.bilibili.chatbot.plus.domain.bilibili.adapter.port.BilibiliPort;
+import com.bilibili.chatbot.plus.domain.bilibili.adapter.port.BilibiliVideoPort;
 import com.bilibili.chatbot.plus.domain.bilibili.serivce.BilibiliServiceImpl;
 import com.bilibili.chatbot.plus.infrastructure.adapter.repository.BilibiliRepositoryImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -49,8 +50,18 @@ public class BilibiliConfig {
                 .addConverterFactory(JacksonConverterFactory.create())
                 .build()
                 .create(BilibiliPort.class);
+
+        BilibiliVideoPort bilibiliVideoPort = new Retrofit.Builder()
+                .baseUrl(properties.getAnalysisVideoUrl())
+                .client(httpClient)
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .addConverterFactory(JacksonConverterFactory.create())
+                .build()
+                .create(BilibiliVideoPort.class);
+
         log.info("b站AI助手服务装配完成");
         return new BilibiliServiceImpl(bilibiliPort,
+                bilibiliVideoPort,
                 properties.getLoginId(),
                 properties.getCookie(),
                 properties.getCsrf(),

@@ -5,8 +5,8 @@ server:
 qwen:
   sdk:
     config:
-     enable: true
-     api-key:
+      enable: true
+      api-key:
 
 # b站配置
 bilibili:
@@ -14,6 +14,8 @@ bilibili:
     plus:
       config:
         url: "https://api.vc.bilibili.com"
+        analysis_video_url: "https://www.hhlqilongzhu.cn"
+        send_image_url: "https://api.vc.bilibili.com"
         login_id:
         cookie:
         csrf:
