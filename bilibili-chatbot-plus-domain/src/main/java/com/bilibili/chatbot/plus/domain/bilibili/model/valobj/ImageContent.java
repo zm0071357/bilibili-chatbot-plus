@@ -12,9 +12,9 @@ import lombok.NoArgsConstructor;
 public class ImageContent {
     private Integer height;
     private Integer width;
-    private String imageType;
-    private Integer original;
-    private Integer size;
+    private String imageType = "jpeg";
+    private Integer original = 1;
+    private Double size;
     private String url;
 
 }

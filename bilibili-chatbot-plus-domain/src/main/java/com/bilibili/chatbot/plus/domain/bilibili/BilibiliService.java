@@ -2,6 +2,7 @@ package com.bilibili.chatbot.plus.domain.bilibili;
 
 import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SendMessageResponseEntity;
 import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SessionsEntity;
+import okhttp3.MultipartBody;
 
 import java.io.IOException;
 import java.util.List;
@@ -36,6 +37,8 @@ public interface BilibiliService {
      * @return
      * @throws IOException
      */
-    SendMessageResponseEntity sendMessage(long receiverId, Integer msgType, String content) throws IOException;
+    SendMessageResponseEntity sendTextMessage(long receiverId, Integer msgType, String content) throws IOException;
 
+
+    SendMessageResponseEntity sendImageMessage(MultipartBody.Part url, long receiverId, Integer msgType) throws IOException;
 }

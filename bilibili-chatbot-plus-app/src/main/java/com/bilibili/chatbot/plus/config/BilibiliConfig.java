@@ -1,5 +1,6 @@
 package com.bilibili.chatbot.plus.config;
 
+import com.bilibili.chatbot.plus.domain.bilibili.adapter.port.BilibiliImagePort;
 import com.bilibili.chatbot.plus.domain.bilibili.adapter.port.BilibiliPort;
 import com.bilibili.chatbot.plus.domain.bilibili.adapter.port.BilibiliVideoPort;
 import com.bilibili.chatbot.plus.domain.bilibili.serivce.BilibiliServiceImpl;
@@ -11,6 +12,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import qwen.sdk.largemodel.chat.impl.ChatServiceImpl;
+import qwen.sdk.largemodel.image.impl.ImageServiceImpl;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.jackson.JacksonConverterFactory;
@@ -51,6 +53,14 @@ public class BilibiliConfig {
                 .build()
                 .create(BilibiliPort.class);
 
+        BilibiliImagePort bilibiliImagePort = new Retrofit.Builder()
+                .baseUrl(properties.getSendImageUrl())
+                .client(httpClient)
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .addConverterFactory(JacksonConverterFactory.create())
+                .build()
+                .create(BilibiliImagePort.class);
+
         BilibiliVideoPort bilibiliVideoPort = new Retrofit.Builder()
                 .baseUrl(properties.getAnalysisVideoUrl())
                 .client(httpClient)
@@ -61,6 +71,7 @@ public class BilibiliConfig {
 
         log.info("b站AI助手服务装配完成");
         return new BilibiliServiceImpl(bilibiliPort,
+                bilibiliImagePort,
                 bilibiliVideoPort,
                 properties.getLoginId(),
                 properties.getCookie(),
@@ -72,8 +83,10 @@ public class BilibiliConfig {
     }
 
     @Bean("bilibiliRepositoryImpl")
-    public BilibiliRepositoryImpl bilibiliRepository(ChatServiceImpl chatServiceImpl) {
-        return new BilibiliRepositoryImpl(properties.getLoginId(), chatServiceImpl);
+    public BilibiliRepositoryImpl bilibiliRepository(ChatServiceImpl chatServiceImpl, ImageServiceImpl imageServiceImpl) {
+        return new BilibiliRepositoryImpl(properties.getLoginId(),
+                chatServiceImpl,
+                imageServiceImpl);
     }
 
 }

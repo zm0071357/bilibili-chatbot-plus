@@ -1,21 +1,19 @@
 package com.bilibili.chatbot.plus.domain.bilibili.adapter.port;
 
 import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SendImageResponseEntity;
-import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SessionsEntity;
+import okhttp3.MultipartBody;
 import retrofit2.Call;
-import retrofit2.http.GET;
-import retrofit2.http.Header;
-import retrofit2.http.Headers;
-import retrofit2.http.Query;
+import retrofit2.http.*;
 
 import java.io.IOException;
 
 public interface BilibiliImagePort {
 
-    @GET("/dynamic/feed/draw/upload_bfs")
-    @Headers("TextContent-Type: application/x-www-form-urlencoded")
+    @POST("/x/dynamic/feed/draw/upload_bfs")
+    //@Headers("Content-Type: application/json; charset=utf-8")
+    @Multipart
     Call<SendImageResponseEntity> sendImage(@Header("Cookie") String cookie,
-                                            @Query("") String imageUrl,
-                                            @Query("") Integer size,
-                                            @Query("") String mobiApp) throws IOException;
+                                            @Part MultipartBody.Part url,
+                                            @Query("biz") String biz,
+                                            @Query("csrf") String csrf) throws IOException;
 }

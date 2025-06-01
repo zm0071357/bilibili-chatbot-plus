@@ -4,13 +4,15 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import okhttp3.MultipartBody;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class QwenResponseEntity<E> {
-    private E result;
-    private boolean isImage;
+public class QwenImageResponseEntity {
+
+    private String url;
+    private MultipartBody.Part part;
 
 }

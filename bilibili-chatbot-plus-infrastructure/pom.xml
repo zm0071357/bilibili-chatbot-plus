@@ -22,6 +22,10 @@
             <groupId>top.xiaoming-programming</groupId>
             <artifactId>bilibili-chatbot-plus-domain</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp-sse</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>top.xiaoming-programming</groupId>
