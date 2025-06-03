@@ -19,7 +19,6 @@ public class ShareContent {
     private String thumb;
     private String title;
     private String bvid;
-    private String onlineLink;
 
     public String getVideoUrl(String bvid) {
         return "https://www.bilibili.com/video/" + bvid + "/?spm_id_from=333.1007.search-card.all.click&vd_source=795fb03bc8fe78dccf07b16bc66729ff";

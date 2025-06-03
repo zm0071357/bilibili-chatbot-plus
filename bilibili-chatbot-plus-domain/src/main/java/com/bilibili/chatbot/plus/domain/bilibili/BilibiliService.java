@@ -2,7 +2,6 @@ package com.bilibili.chatbot.plus.domain.bilibili;
 
 import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SendMessageResponseEntity;
 import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SessionsEntity;
-import okhttp3.MultipartBody;
 
 import java.io.IOException;
 import java.util.List;
@@ -23,14 +22,7 @@ public interface BilibiliService {
     List<SessionsEntity.Data.SessionList> getUnHandleSessionLists(List<SessionsEntity.Data.SessionList> sessionLists);
 
     /**
-     * 处理
-     * @param unHandleSessionLists 未回复对话列表
-     * @return
-     */
-    void handle(List<SessionsEntity.Data.SessionList> unHandleSessionLists) throws IOException;
-
-    /**
-     * 发送消息
+     * 发送文字消息
      * @param receiverId
      * @param msgType
      * @param content
@@ -39,6 +31,13 @@ public interface BilibiliService {
      */
     SendMessageResponseEntity sendTextMessage(long receiverId, Integer msgType, String content) throws IOException;
 
+    /**
+     * 发送图片消息
+     * @param senderUid
+     * @param msgType
+     * @param url
+     * @return
+     */
+    SendMessageResponseEntity sendImageMessage(long senderUid, Integer msgType, String url) throws IOException;
 
-    SendMessageResponseEntity sendImageMessage(MultipartBody.Part url, long receiverId, Integer msgType) throws IOException;
 }

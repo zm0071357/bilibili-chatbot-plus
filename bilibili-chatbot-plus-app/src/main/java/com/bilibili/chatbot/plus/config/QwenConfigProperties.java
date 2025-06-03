@@ -1,6 +1,7 @@
 package com.bilibili.chatbot.plus.config;
 
 import lombok.Data;
+import okhttp3.logging.HttpLoggingInterceptor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Data
@@ -8,4 +9,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class QwenConfigProperties {
     private boolean enable;
     private String apiKey;
+    private String analysisVideoUrl;
 }

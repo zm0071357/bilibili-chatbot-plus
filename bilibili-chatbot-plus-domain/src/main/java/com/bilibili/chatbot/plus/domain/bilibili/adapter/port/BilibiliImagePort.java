@@ -9,11 +9,19 @@ import java.io.IOException;
 
 public interface BilibiliImagePort {
 
+    /**
+     * 发送图片至b站图床
+     * @param cookie
+     * @param fileUp
+     * @param biz
+     * @param csrf
+     * @return
+     * @throws IOException
+     */
     @POST("/x/dynamic/feed/draw/upload_bfs")
-    //@Headers("Content-Type: application/json; charset=utf-8")
     @Multipart
     Call<SendImageResponseEntity> sendImage(@Header("Cookie") String cookie,
-                                            @Part MultipartBody.Part url,
+                                            @Part MultipartBody.Part fileUp,
                                             @Query("biz") String biz,
                                             @Query("csrf") String csrf) throws IOException;
 }

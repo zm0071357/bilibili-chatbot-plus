@@ -1,4 +1,4 @@
-package com.bilibili.chatbot.plus.domain.qwen.model;
+package com.bilibili.chatbot.plus.domain.qwen.model.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

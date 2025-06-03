@@ -1,12 +1,20 @@
 server:
   port: 7001
 
+# Http客户端配置
+okhttpclient:
+  config:
+    connectTimeOut: 60
+    writeTimeOut: 60
+    readTimeOut: 60
+
 # 通义千问配置
 qwen:
   sdk:
     config:
       enable: true
       api-key:
+      analysis_video_url: "https://www.hhlqilongzhu.cn"
 
 # b站配置
 bilibili:
@@ -14,8 +22,7 @@ bilibili:
     plus:
       config:
         url: "https://api.vc.bilibili.com"
-        analysis_video_url: "https://www.hhlqilongzhu.cn"
-        send_image_url: "https://api.vc.bilibili.com"
+        send_image_url: "https://api.bilibili.com"
         login_id:
         cookie:
         csrf:

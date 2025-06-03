@@ -4,15 +4,12 @@ import lombok.Data;
 import okhttp3.logging.HttpLoggingInterceptor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.util.UUID;
-
 
 @Data
 @ConfigurationProperties(prefix = "bilibili.chatbot.plus.config", ignoreInvalidFields = true)
 public class BilibiliConfigProperties {
 
     private String url;
-    private String analysisVideoUrl;
     private String sendImageUrl;
     private long loginId;
     private String cookie;

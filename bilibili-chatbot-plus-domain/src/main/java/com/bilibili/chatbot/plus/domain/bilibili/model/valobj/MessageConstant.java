@@ -10,7 +10,10 @@ public class MessageConstant {
     public static final String DES_VIDEO_MESSAGE = "根据封面图和视频内容总结这个视频";
     public static final String NOTIFY_MESSAGE = "薯条回复了通知消息~";
     public static final String UNKNOWN_MESSAGE = "薯条回复了未知消息~";
-    public static final String IMAGE_FAILED_MESSAGE = "生成图片失败";
+    public static final String TEXT_FAILED_MESSAGE = "回复失败，请稍后再试~";
+    public static final String IMAGE_FAILED_MESSAGE = "生成失败，请稍后再试~";
+    public static final String SHARE_FAILED_MESSAGE = "总结失败，请稍后再试~";
+    public static final String NO_REFER_IMAGE = "请先提供一张参考图";
     public static final String BIZ = "im";
 
     public static String getContent(String content) {
