@@ -576,11 +576,12 @@ public class QwenRepositoryImpl implements QwenRepository {
             String result = String.valueOf(response.getOutput().getChoices().get(0).getMessage().getContent().get(0).getText());
             log.info("返回结果:{}", JSON.toJSONString(response));
             // 添加历史记录
-            // 后续调用失败的话，删除本次两条message
             messages.add(ChatRequest.Input.Message.builder()
                     .role(RoleConstant.SYSTEM)
                     .content(result)
                     .build());
+            messages.remove(messages.size() - 1);
+            messages.remove(messages.size() - 1);
             // 更新
             history.put(senderUid, messages);
             return QwenResponseEntity.builder()
