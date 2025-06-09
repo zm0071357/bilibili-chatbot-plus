@@ -9,16 +9,17 @@ import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SubmitVideoRespons
 import com.bilibili.chatbot.plus.domain.bilibili.model.valobj.*;
 import com.bilibili.chatbot.plus.domain.qwen.QwenService;
 import com.bilibili.chatbot.plus.domain.qwen.model.entity.QwenResponseEntity;
+import com.bilibili.chatbot.plus.infrastructure.adapter.repository.QwenRepositoryImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
+import qwen.sdk.largemodel.chat.model.ChatRequest;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
-@Component
 public class BilibiliChatJob {
 
     @Resource
@@ -27,10 +28,19 @@ public class BilibiliChatJob {
     @Resource
     private QwenService qwenService;
 
+    private final QwenRepositoryImpl qwenRepositoryImpl;
+
+    public BilibiliChatJob(QwenRepositoryImpl qwenRepositoryImpl) {
+        this.qwenRepositoryImpl = qwenRepositoryImpl;
+    }
+
+    /**
+     * 核心任务 - 处理对话
+     */
     @Scheduled(cron = "0/10 * * * * ?")
     public void exec() {
         try {
-            log.info("定时任务开始，获取对话列表");
+            log.info("定时任务开始：获取对话列表");
             // 获取对话列表
             SessionsEntity sessionEntity = bilibiliService.getSessions();
             List<SessionsEntity.Data.SessionList> sessionLists = sessionEntity.getData().getSessionList();
@@ -113,6 +123,32 @@ public class BilibiliChatJob {
         } catch (Exception e) {
             log.info("定时任务出错:{}", e.getMessage());
         }
+    }
+
+    /**
+     * 核心任务 - 控制历史记录
+     * 限制token防止请求失败
+     */
+    @Scheduled(cron = "0/10 * * * * ?")
+    public void history() {
+        log.info("定时任务开始：获取历史记录集合");
+        Map<Long, List<ChatRequest.Input.Message>> history = qwenRepositoryImpl.getHistory();
+        for (Map.Entry<Long, List<ChatRequest.Input.Message>> entry : history.entrySet()) {
+            Long userId = entry.getKey();
+            List<ChatRequest.Input.Message> messages = entry.getValue();
+            int size = messages.size();
+            if (size > 20) {
+                log.info("用户 {} 的历史记录超过20条（当前: {} 条），保留最近20条", userId, size);
+                List<ChatRequest.Input.Message> retainedMessages = new ArrayList<>();
+                retainedMessages.add(messages.get(0));
+                int startIndex = size - 19;
+                retainedMessages.addAll(messages.subList(startIndex, size));
+                history.put(userId, retainedMessages);
+                log.info("用户 {} 历史记录清理完成，保留 {} 条记录（系统消息1条 + 最近交互消息{}条）",
+                        userId, retainedMessages.size(), retainedMessages.size() - 1);
+            }
+        }
+        log.info("定时任务完成");
     }
 
     /**

@@ -624,4 +624,12 @@ public class QwenRepositoryImpl implements QwenRepository {
                 .build());
         return messages;
     }
+
+    /**
+     * 返回整个历史记录集合
+     * @return
+     */
+    public Map<Long, List<ChatRequest.Input.Message>> getHistory() {
+        return history;
+    }
 }

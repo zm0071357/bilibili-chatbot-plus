@@ -5,6 +5,8 @@ import com.bilibili.chatbot.plus.domain.bilibili.adapter.port.BilibiliPort;
 import com.bilibili.chatbot.plus.domain.bilibili.adapter.port.BilibiliVideoExtraPort;
 import com.bilibili.chatbot.plus.domain.bilibili.adapter.port.BilibiliVideoPort;
 import com.bilibili.chatbot.plus.infrastructure.adapter.repository.BilibiliRepositoryImpl;
+import com.bilibili.chatbot.plus.infrastructure.adapter.repository.QwenRepositoryImpl;
+import com.bilibili.chatbot.plus.trigger.job.BilibiliChatJob;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -74,6 +76,11 @@ public class BilibiliConfig {
                 properties.getReceiverType(),
                 okHttpClient
                 );
+    }
+
+    @Bean("bilibiliChatJob")
+    public BilibiliChatJob bilibiliChatJob(QwenRepositoryImpl qwenRepositoryImpl) {
+        return new BilibiliChatJob(qwenRepositoryImpl);
     }
 
 }
