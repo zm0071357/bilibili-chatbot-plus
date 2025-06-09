@@ -15,9 +15,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import qwen.sdk.largemodel.chat.model.ChatRequest;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadPoolExecutor;
 
 @Slf4j
 public class BilibiliChatJob {
@@ -30,8 +32,11 @@ public class BilibiliChatJob {
 
     private final QwenRepositoryImpl qwenRepositoryImpl;
 
-    public BilibiliChatJob(QwenRepositoryImpl qwenRepositoryImpl) {
+    private final ThreadPoolExecutor threadPoolExecutor;
+
+    public BilibiliChatJob(QwenRepositoryImpl qwenRepositoryImpl, ThreadPoolExecutor threadPoolExecutor) {
         this.qwenRepositoryImpl = qwenRepositoryImpl;
+        this.threadPoolExecutor = threadPoolExecutor;
     }
 
     /**
@@ -52,71 +57,14 @@ public class BilibiliChatJob {
             if (size > 0) {
                 log.info("开始处理未回复对话");
                 for (SessionsEntity.Data.SessionList unHandleSessionList : unHandleSessionLists) {
-                    // 参数
-                    long senderUid = unHandleSessionList.getLastMsg().getSender_uid();
-                    int msgType = unHandleSessionList.getLastMsg().getMsg_type();
-                    String contentJSON = unHandleSessionList.getLastMsg().getContent();
-                    String question = null;
-                    ShareContent shareContent = null;
-
-                    // 发送预处理通知
-                    SendMessageResponseEntity sendPreMessageResponse = bilibiliService.sendTextMessage(senderUid, MessageTypeEnum.TEXT.getType(), MessageConstant.PRE_MESSAGE);
-                    log.info("给用户发送预处理消息:{}, code:{}", senderUid, sendPreMessageResponse.getCode());
-
-                    // 转换消息实体
-                    if (contentJSON.contains(ContentTypeEnum.TEXT.getType())) {
-                        TextContent textContent = JSON.parseObject(contentJSON, TextContent.class);
-                        question = textContent.getContent();
-                    } else if (contentJSON.contains(ContentTypeEnum.IMAGE.getType())) {
-                        ImageContent imageContent = JSON.parseObject(contentJSON, ImageContent.class);
-                        question = imageContent.getUrl();
-                    } else if (contentJSON.contains(ContentTypeEnum.SHARE.getType())) {
-                        shareContent = JSON.parseObject(contentJSON, ShareContent.class);
-                    }
-
-                    // 大模型处理
-                    QwenResponseEntity response = qwenService.handle(MessageContextEntity.builder()
-                            .senderUid(senderUid)
-                            .msgType(msgType)
-                            .question(question)
-                            .shareContent(shareContent)
-                            .build());
-
-                    // 发送处理结果
-                    // 文字消息
-                    if (response.isText()) {
-                        String text = String.valueOf(response.getResult());
-                        if (text.length() < 500) {
-                            SendMessageResponseEntity sendMessageResponse = bilibiliService.sendTextMessage(senderUid, MessageTypeEnum.TEXT.getType(), text);
-                            log.info("给用户发送处理消息:{}, code:{}", senderUid, sendMessageResponse.getCode());
-                        } else {
-                            List<String> textList = handleText(text);
-                            for (String textPiece : textList) {
-                                SendMessageResponseEntity sendMessageResponse = bilibiliService.sendTextMessage(senderUid, MessageTypeEnum.TEXT.getType(), textPiece);
-                                log.info("给用户发送处理消息:{}, code:{}", senderUid, sendMessageResponse.getCode());
-                            }
+                    // 使用线程池同时处理多条对话
+                    threadPoolExecutor.execute(() -> {
+                        try {
+                            handleSingleSessionList(unHandleSessionList);
+                        } catch (Exception e) {
+                            log.error("处理对话时出错: {}", e.getMessage(), e);
                         }
-                    } else if (response.isImage()){
-                        // 图片消息
-                        String url = String.valueOf(response.getResult());
-                        SendMessageResponseEntity sendImageMessageResponse = bilibiliService.sendImageMessage(senderUid, MessageTypeEnum.IMAGE.getType(), url);
-                        log.info("给用户发送处理消息:{}, code:{}", senderUid, sendImageMessageResponse.getCode());
-                    } else if (response.isVideo()) {
-                        // 视频消息
-                        String url = String.valueOf(response.getResult());
-                        // 将视频上传至b站
-                        SubmitVideoResponseEntity submitVideoResponse = bilibiliService.uploadVideo(url);
-                        String text;
-                        SendMessageResponseEntity sendImageMessageResponse;
-                        if (submitVideoResponse.isSuccess()) {
-                            text = "视频生成成功，下载地址：\n" + "\n" + url + "\n" + "\n请复制这段链接后打开任意一个浏览器下载，另外视频已成功投稿至b站，稍等审核通过后即可通过BV号查看生成的视频哦~\n" + "BV号为：" + submitVideoResponse.getResult();
-                            sendImageMessageResponse = bilibiliService.sendTextMessage(senderUid, MessageTypeEnum.TEXT.getType(), text);
-                        } else {
-                            text = "视频生成成功，下载地址：\n" + url + submitVideoResponse.getResult();
-                            sendImageMessageResponse = bilibiliService.sendTextMessage(senderUid, MessageTypeEnum.TEXT.getType(), text);
-                        }
-                        log.info("给用户发送处理消息:{}, code:{}", senderUid, sendImageMessageResponse.getCode());
-                    }
+                    });
                 }
             }
             log.info("定时任务完成");
@@ -127,7 +75,7 @@ public class BilibiliChatJob {
 
     /**
      * 核心任务 - 控制历史记录
-     * 限制token防止请求失败
+     * 限制 token 防止请求失败
      */
     @Scheduled(cron = "0/10 * * * * ?")
     public void history() {
@@ -163,5 +111,78 @@ public class BilibiliChatJob {
             textPieceList.add(text.substring(start, end));
         }
         return textPieceList;
+    }
+
+    /**
+     * 处理单个对话
+     * @param unHandleSessionList 对话
+     * @throws IOException
+     */
+    private void handleSingleSessionList(SessionsEntity.Data.SessionList unHandleSessionList) throws IOException {
+        // 参数
+        long senderUid = unHandleSessionList.getLastMsg().getSender_uid();
+        int msgType = unHandleSessionList.getLastMsg().getMsg_type();
+        String contentJSON = unHandleSessionList.getLastMsg().getContent();
+        String question = null;
+        ShareContent shareContent = null;
+
+        // 发送预处理通知
+        SendMessageResponseEntity sendPreMessageResponse = bilibiliService.sendTextMessage(senderUid, MessageTypeEnum.TEXT.getType(), MessageConstant.PRE_MESSAGE);
+        log.info("给用户发送预处理消息:{}, code:{}", senderUid, sendPreMessageResponse.getCode());
+
+        // 转换消息实体
+        if (contentJSON.contains(ContentTypeEnum.TEXT.getType())) {
+            TextContent textContent = JSON.parseObject(contentJSON, TextContent.class);
+            question = textContent.getContent();
+        } else if (contentJSON.contains(ContentTypeEnum.IMAGE.getType())) {
+            ImageContent imageContent = JSON.parseObject(contentJSON, ImageContent.class);
+            question = imageContent.getUrl();
+        } else if (contentJSON.contains(ContentTypeEnum.SHARE.getType())) {
+            shareContent = JSON.parseObject(contentJSON, ShareContent.class);
+        }
+
+        // 大模型处理
+        QwenResponseEntity response = qwenService.handle(MessageContextEntity.builder()
+                .senderUid(senderUid)
+                .msgType(msgType)
+                .question(question)
+                .shareContent(shareContent)
+                .build());
+
+        // 发送处理结果
+        // 文字消息
+        if (response.isText()) {
+            String text = String.valueOf(response.getResult());
+            if (text.length() < 500) {
+                SendMessageResponseEntity sendMessageResponse = bilibiliService.sendTextMessage(senderUid, MessageTypeEnum.TEXT.getType(), text);
+                log.info("给用户发送处理消息:{}, code:{}", senderUid, sendMessageResponse.getCode());
+            } else {
+                List<String> textList = handleText(text);
+                for (String textPiece : textList) {
+                    SendMessageResponseEntity sendMessageResponse = bilibiliService.sendTextMessage(senderUid, MessageTypeEnum.TEXT.getType(), textPiece);
+                    log.info("给用户发送处理消息:{}, code:{}", senderUid, sendMessageResponse.getCode());
+                }
+            }
+        } else if (response.isImage()){
+            // 图片消息
+            String url = String.valueOf(response.getResult());
+            SendMessageResponseEntity sendImageMessageResponse = bilibiliService.sendImageMessage(senderUid, MessageTypeEnum.IMAGE.getType(), url);
+            log.info("给用户发送处理消息:{}, code:{}", senderUid, sendImageMessageResponse.getCode());
+        } else if (response.isVideo()) {
+            // 视频消息
+            String url = String.valueOf(response.getResult());
+            // 将视频上传至b站
+            SubmitVideoResponseEntity submitVideoResponse = bilibiliService.uploadVideo(url);
+            String text;
+            SendMessageResponseEntity sendImageMessageResponse;
+            if (submitVideoResponse.isSuccess()) {
+                text = "视频生成成功，下载地址：\n" + "\n" + url + "\n" + "\n请复制这段链接后打开任意一个浏览器下载，另外视频已成功投稿至b站，稍等审核通过后即可通过BV号查看生成的视频哦~\n" + "BV号为：" + submitVideoResponse.getResult();
+                sendImageMessageResponse = bilibiliService.sendTextMessage(senderUid, MessageTypeEnum.TEXT.getType(), text);
+            } else {
+                text = "视频生成成功，下载地址：\n" + url + submitVideoResponse.getResult();
+                sendImageMessageResponse = bilibiliService.sendTextMessage(senderUid, MessageTypeEnum.TEXT.getType(), text);
+            }
+            log.info("给用户发送处理消息:{}, code:{}", senderUid, sendImageMessageResponse.getCode());
+        }
     }
 }

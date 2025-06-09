@@ -16,6 +16,8 @@ import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 
+import java.util.concurrent.ThreadPoolExecutor;
+
 
 @Slf4j
 @Configuration
@@ -79,8 +81,8 @@ public class BilibiliConfig {
     }
 
     @Bean("bilibiliChatJob")
-    public BilibiliChatJob bilibiliChatJob(QwenRepositoryImpl qwenRepositoryImpl) {
-        return new BilibiliChatJob(qwenRepositoryImpl);
+    public BilibiliChatJob bilibiliChatJob(QwenRepositoryImpl qwenRepositoryImpl, ThreadPoolExecutor threadPoolExecutor) {
+        return new BilibiliChatJob(qwenRepositoryImpl, threadPoolExecutor);
     }
 
 }

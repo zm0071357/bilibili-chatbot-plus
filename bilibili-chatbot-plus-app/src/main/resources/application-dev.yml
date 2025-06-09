@@ -8,6 +8,17 @@ okhttpclient:
     writeTimeOut: 60
     readTimeOut: 60
 
+# 线程池配置
+thread:
+  pool:
+    executor:
+      config:
+        core-pool-size: 20
+        max-pool-size: 50
+        keep-alive-time: 5000
+        block-queue-size: 5000
+        policy: CallerRunsPolicy
+
 # 通义千问配置
 qwen:
   sdk:
