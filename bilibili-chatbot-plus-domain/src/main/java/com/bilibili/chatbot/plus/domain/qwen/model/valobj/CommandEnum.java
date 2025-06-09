@@ -14,6 +14,8 @@ public enum CommandEnum {
     EXPAND("扩图"),
     SUPER_RESOLUTION("图像超分"),
     COLORIZATION("图像上色"),
+    CREATE_VIDEO("生成视频"),
+    CREATE_VIDEO_WITH_BASE_IMAGE_URL("图生视频"),
     ;
 
     private String command;

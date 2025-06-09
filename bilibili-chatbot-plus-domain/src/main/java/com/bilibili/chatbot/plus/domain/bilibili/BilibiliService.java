@@ -2,6 +2,7 @@ package com.bilibili.chatbot.plus.domain.bilibili;
 
 import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SendMessageResponseEntity;
 import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SessionsEntity;
+import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SubmitVideoResponseEntity;
 
 import java.io.IOException;
 import java.util.List;
@@ -40,4 +41,6 @@ public interface BilibiliService {
      */
     SendMessageResponseEntity sendImageMessage(long senderUid, Integer msgType, String url) throws IOException;
 
+
+    SubmitVideoResponseEntity uploadVideo(String videoUrl);
 }

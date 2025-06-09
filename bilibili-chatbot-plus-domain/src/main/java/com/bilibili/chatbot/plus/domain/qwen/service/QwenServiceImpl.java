@@ -39,6 +39,8 @@ public class QwenServiceImpl extends AbstractQwenService{
         commandHandleMap.put(CommandEnum.EXPAND, this::expand);
         commandHandleMap.put(CommandEnum.SUPER_RESOLUTION, this::superResolution);
         commandHandleMap.put(CommandEnum.COLORIZATION, this::colorization);
+        commandHandleMap.put(CommandEnum.CREATE_VIDEO, this::createVideo);
+        commandHandleMap.put(CommandEnum.CREATE_VIDEO_WITH_BASE_IMAGE_URL, this::createVideoWithBaseImageUrl);
         log.info("命令处理器初始化完成");
     }
 
@@ -51,6 +53,7 @@ public class QwenServiceImpl extends AbstractQwenService{
             log.info("普通文字消息:{},{}", senderUid, question);
             return qwenRepository.handleTextMessage(entity);
         } else {
+            log.info("命令文字消息:{},{}", senderUid, question);
             Function<CommandRequestEntity, QwenResponseEntity> handler = commandHandleMap.get(command);
             return handler.apply(CommandRequestEntity.builder()
                     .senderUid(senderUid)
@@ -73,7 +76,7 @@ public class QwenServiceImpl extends AbstractQwenService{
         } catch (IOException e) {
             return QwenResponseEntity.builder()
                     .result(MessageConstant.IMAGE_FAILED_MESSAGE)
-                    .isImage(false)
+                    .isText(true)
                     .build();
         }
     }
@@ -85,7 +88,7 @@ public class QwenServiceImpl extends AbstractQwenService{
             } catch (IOException e) {
                 return QwenResponseEntity.builder()
                         .result(MessageConstant.IMAGE_FAILED_MESSAGE)
-                        .isImage(false)
+                        .isText(true)
                         .build();
             }
         });
@@ -98,7 +101,7 @@ public class QwenServiceImpl extends AbstractQwenService{
             } catch (IOException e) {
                 return QwenResponseEntity.builder()
                         .result(MessageConstant.IMAGE_FAILED_MESSAGE)
-                        .isImage(false)
+                        .isText(true)
                         .build();
             }
         });
@@ -111,7 +114,7 @@ public class QwenServiceImpl extends AbstractQwenService{
             } catch (IOException e) {
                 return QwenResponseEntity.builder()
                         .result(MessageConstant.IMAGE_FAILED_MESSAGE)
-                        .isImage(false)
+                        .isText(true)
                         .build();
             }
         });
@@ -124,7 +127,7 @@ public class QwenServiceImpl extends AbstractQwenService{
             } catch (IOException e) {
                 return QwenResponseEntity.builder()
                         .result(MessageConstant.IMAGE_FAILED_MESSAGE)
-                        .isImage(false)
+                        .isText(true)
                         .build();
             }
         });
@@ -137,10 +140,52 @@ public class QwenServiceImpl extends AbstractQwenService{
             } catch (IOException e) {
                 return QwenResponseEntity.builder()
                         .result(MessageConstant.IMAGE_FAILED_MESSAGE)
-                        .isImage(false)
+                        .isText(true)
                         .build();
             }
         });
+    }
+
+    private QwenResponseEntity createVideo(CommandRequestEntity commandRequestEntity) {
+        try {
+            long senderUid = commandRequestEntity.getSenderUid();
+            String question = commandRequestEntity.getQuestion();
+            String request = commandRequestEntity.getRequest(question);
+            QwenResponseEntity response = qwenRepository.createVideo(request);
+            String url = String.valueOf(response.getResult());
+            lastImageMap.put(senderUid, url);
+            log.info("指令:{}.要求:{},生成的视频url:{}",commandRequestEntity.getCommandEnum().getCommand(), request, url);
+            return response;
+        } catch (IOException e) {
+            return QwenResponseEntity.builder()
+                    .result(MessageConstant.VIDEO_FAILED_MESSAGE)
+                    .isText(true)
+                    .build();
+        }
+    }
+
+    private QwenResponseEntity createVideoWithBaseImageUrl(CommandRequestEntity commandRequestEntity) {
+        try {
+            long senderUid = commandRequestEntity.getSenderUid();
+            String url = lastImageMap.get(senderUid);
+            if (url == null) {
+                return QwenResponseEntity.builder()
+                        .result(MessageConstant.NO_REFER_IMAGE)
+                        .isText(true)
+                        .build();
+            }
+            String question = commandRequestEntity.getQuestion();
+            String request = commandRequestEntity.getRequest(question);
+            QwenResponseEntity response = qwenRepository.createVideoWithBaseImageUrl(request, url);
+            String newUrl = String.valueOf(response.getResult());
+            log.info("指令:{}.要求:{},生成的视频url:{}",commandRequestEntity.getCommandEnum().getCommand(), request, newUrl);
+            return response;
+        } catch (IOException e) {
+            return QwenResponseEntity.builder()
+                    .result(MessageConstant.VIDEO_FAILED_MESSAGE)
+                    .isText(true)
+                    .build();
+        }
     }
 
     /**
@@ -156,7 +201,7 @@ public class QwenServiceImpl extends AbstractQwenService{
             if (url == null) {
                 return QwenResponseEntity.builder()
                         .result(MessageConstant.NO_REFER_IMAGE)
-                        .isImage(false)
+                        .isText(true)
                         .build();
             }
             String question = commandRequestEntity.getQuestion();

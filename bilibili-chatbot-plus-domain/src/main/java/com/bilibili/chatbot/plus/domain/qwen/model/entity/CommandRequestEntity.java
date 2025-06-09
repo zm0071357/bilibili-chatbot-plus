@@ -6,6 +6,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * 命令请求实体
+ */
 @Data
 @Builder
 @AllArgsConstructor
@@ -14,6 +17,7 @@ public class CommandRequestEntity {
     private long senderUid;
     private String question;
     private CommandEnum commandEnum;
+    private String baseUrl;
 
     public String getRequest(String question) {
         String command = commandEnum.getCommand();

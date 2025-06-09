@@ -62,7 +62,7 @@ public class QwenConfig {
     }
 
     @Bean(name = "qwenRepositoryImpl")
-    public QwenRepositoryImpl qwenRepositoryImpl(OkHttpClient okHttpClient, ChatServiceImpl chatServiceImpl, ImageServiceImpl imageServiceImpl) {
+    public QwenRepositoryImpl qwenRepositoryImpl(OkHttpClient okHttpClient, ChatServiceImpl chatServiceImpl, ImageServiceImpl imageServiceImpl, VideoServiceImpl videoServiceImpl) {
         VideoPort videoPort = new Retrofit.Builder()
                 .baseUrl(properties.getAnalysisVideoUrl())
                 .client(okHttpClient)
@@ -71,6 +71,6 @@ public class QwenConfig {
                 .build()
                 .create(VideoPort.class);
         log.info("b站AI助手 - 通义千问大模型相关服务配置完成");
-        return new QwenRepositoryImpl(videoPort, chatServiceImpl, imageServiceImpl);
+        return new QwenRepositoryImpl(videoPort, chatServiceImpl, imageServiceImpl, videoServiceImpl);
     }
 }

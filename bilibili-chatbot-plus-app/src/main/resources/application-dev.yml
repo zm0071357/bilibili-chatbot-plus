@@ -23,12 +23,14 @@ bilibili:
       config:
         url: "https://api.vc.bilibili.com"
         send_image_url: "https://api.bilibili.com"
+        send_video_url: "https://member.bilibili.com"
         login_id:
         cookie:
         csrf:
         session_type: 1
         size: 100
         mobiApp: "web"
+        cover:
 
 # 日志
 logging:

@@ -89,4 +89,19 @@ public interface QwenRepository {
      * @throws IOException
      */
     QwenResponseEntity colorization(String request, String url) throws IOException;
+
+    /**
+     * 文生视频
+     * @param request
+     * @return
+     */
+    QwenResponseEntity createVideo(String request) throws IOException;
+
+    /**
+     * 图生视频 - 基于首帧
+     * @param request
+     * @param url
+     * @return
+     */
+    QwenResponseEntity createVideoWithBaseImageUrl(String request, String url) throws IOException;
 }

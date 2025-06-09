@@ -2,6 +2,8 @@ package com.bilibili.chatbot.plus.config;
 
 import com.bilibili.chatbot.plus.domain.bilibili.adapter.port.BilibiliImagePort;
 import com.bilibili.chatbot.plus.domain.bilibili.adapter.port.BilibiliPort;
+import com.bilibili.chatbot.plus.domain.bilibili.adapter.port.BilibiliVideoExtraPort;
+import com.bilibili.chatbot.plus.domain.bilibili.adapter.port.BilibiliVideoPort;
 import com.bilibili.chatbot.plus.infrastructure.adapter.repository.BilibiliRepositoryImpl;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
@@ -33,6 +35,7 @@ public class BilibiliConfig {
                 .addConverterFactory(JacksonConverterFactory.create())
                 .build()
                 .create(BilibiliPort.class);
+
         BilibiliImagePort bilibiliImagePort = new Retrofit.Builder()
                 .baseUrl(properties.getSendImageUrl())
                 .client(okHttpClient)
@@ -40,17 +43,36 @@ public class BilibiliConfig {
                 .addConverterFactory(JacksonConverterFactory.create())
                 .build()
                 .create(BilibiliImagePort.class);
+
+        BilibiliVideoPort bilibiliVideoPort = new Retrofit.Builder()
+                .baseUrl(properties.getSendVideoUrl())
+                .client(okHttpClient)
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .addConverterFactory(JacksonConverterFactory.create())
+                .build()
+                .create(BilibiliVideoPort.class);
+
+        BilibiliVideoExtraPort bilibiliVideoExtraPort = new Retrofit.Builder()
+                .baseUrl("https://upos-cs-upcdnbldsa.bilivideo.com/") // 假URL
+                .client(okHttpClient)
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .addConverterFactory(JacksonConverterFactory.create())
+                .build()
+                .create(BilibiliVideoExtraPort.class);
         log.info("b站AI助手 - b站相关服务配置完成");
         return new BilibiliRepositoryImpl(
                 bilibiliPort,
                 bilibiliImagePort,
+                bilibiliVideoPort,
+                bilibiliVideoExtraPort,
                 properties.getLoginId(),
                 properties.getCookie(),
                 properties.getCsrf(),
                 properties.getSessionType(),
                 properties.getSize(),
                 properties.getMobiApp(),
-                properties.getReceiverType()
+                properties.getReceiverType(),
+                okHttpClient
                 );
     }
 

@@ -22,6 +22,11 @@ import qwen.sdk.largemodel.image.impl.ImageServiceImpl;
 import qwen.sdk.largemodel.image.model.ImageRequest;
 import qwen.sdk.largemodel.image.model.ImageResponse;
 import qwen.sdk.largemodel.image.model.ResultResponse;
+import qwen.sdk.largemodel.video.enums.VideoModelEnum;
+import qwen.sdk.largemodel.video.enums.VideoTaskStatusEnum;
+import qwen.sdk.largemodel.video.impl.VideoServiceImpl;
+import qwen.sdk.largemodel.video.model.VideoRequest;
+import qwen.sdk.largemodel.video.model.VideoResponse;
 import retrofit2.Call;
 import retrofit2.Response;
 
@@ -40,12 +45,15 @@ public class QwenRepositoryImpl implements QwenRepository {
 
     private final ImageServiceImpl imageServiceImpl;
 
+    private final VideoServiceImpl videoServiceImpl;
+
     public Map<Long, List<ChatRequest.Input.Message>> history = new ConcurrentHashMap<>();
 
-    public QwenRepositoryImpl(VideoPort videoPort, ChatServiceImpl chatServiceImpl, ImageServiceImpl imageServiceImpl) {
+    public QwenRepositoryImpl(VideoPort videoPort, ChatServiceImpl chatServiceImpl, ImageServiceImpl imageServiceImpl, VideoServiceImpl videoServiceImpl) {
         this.videoPort = videoPort;
         this.chatServiceImpl = chatServiceImpl;
         this.imageServiceImpl = imageServiceImpl;
+        this.videoServiceImpl = videoServiceImpl;
     }
 
     @Override
@@ -90,7 +98,7 @@ public class QwenRepositoryImpl implements QwenRepository {
             history.put(senderUid, messages);
             return QwenResponseEntity.builder()
                     .result(result)
-                    .isImage(false)
+                    .isText(true)
                     .build();
         } catch (IOException e) {
             messages.remove(messages.size() - 1);
@@ -98,7 +106,7 @@ public class QwenRepositoryImpl implements QwenRepository {
             history.put(senderUid, messages);
             return QwenResponseEntity.builder()
                     .result(MessageConstant.TEXT_FAILED_MESSAGE)
-                    .isImage(false)
+                    .isText(true)
                     .build();
         }
     }
@@ -130,7 +138,7 @@ public class QwenRepositoryImpl implements QwenRepository {
             } else if (ImageTaskStatusEnum.FAILED.getCode().equals(curStatus) || ImageTaskStatusEnum.UNKNOWN.getCode().equals(curStatus)) {
                 return QwenResponseEntity.builder()
                         .result(MessageConstant.IMAGE_FAILED_MESSAGE)
-                        .isImage(true)
+                        .isText(true)
                         .build();
             }
         }
@@ -173,7 +181,7 @@ public class QwenRepositoryImpl implements QwenRepository {
             } else if (ImageTaskStatusEnum.FAILED.getCode().equals(curStatus) || ImageTaskStatusEnum.UNKNOWN.getCode().equals(curStatus)) {
                 return QwenResponseEntity.builder()
                         .result(MessageConstant.IMAGE_FAILED_MESSAGE)
-                        .isImage(true)
+                        .isText(true)
                         .build();
             }
         }
@@ -216,7 +224,7 @@ public class QwenRepositoryImpl implements QwenRepository {
             } else if (ImageTaskStatusEnum.FAILED.getCode().equals(curStatus) || ImageTaskStatusEnum.UNKNOWN.getCode().equals(curStatus)) {
                 return QwenResponseEntity.builder()
                         .result(MessageConstant.IMAGE_FAILED_MESSAGE)
-                        .isImage(true)
+                        .isText(true)
                         .build();
             }
         }
@@ -263,7 +271,7 @@ public class QwenRepositoryImpl implements QwenRepository {
             } else if (ImageTaskStatusEnum.FAILED.getCode().equals(curStatus) || ImageTaskStatusEnum.UNKNOWN.getCode().equals(curStatus)) {
                 return QwenResponseEntity.builder()
                         .result(MessageConstant.IMAGE_FAILED_MESSAGE)
-                        .isImage(true)
+                        .isText(true)
                         .build();
             }
         }
@@ -306,7 +314,7 @@ public class QwenRepositoryImpl implements QwenRepository {
             } else if (ImageTaskStatusEnum.FAILED.getCode().equals(curStatus) || ImageTaskStatusEnum.UNKNOWN.getCode().equals(curStatus)) {
                 return QwenResponseEntity.builder()
                         .result(MessageConstant.IMAGE_FAILED_MESSAGE)
-                        .isImage(true)
+                        .isText(true)
                         .build();
             }
         }
@@ -349,7 +357,7 @@ public class QwenRepositoryImpl implements QwenRepository {
             } else if (ImageTaskStatusEnum.FAILED.getCode().equals(curStatus) || ImageTaskStatusEnum.UNKNOWN.getCode().equals(curStatus)) {
                 return QwenResponseEntity.builder()
                         .result(MessageConstant.IMAGE_FAILED_MESSAGE)
-                        .isImage(true)
+                        .isText(true)
                         .build();
             }
         }
@@ -358,6 +366,103 @@ public class QwenRepositoryImpl implements QwenRepository {
         return QwenResponseEntity.builder()
                 .result(newUrl)
                 .isImage(true)
+                .build();
+    }
+
+    @Override
+    public QwenResponseEntity createVideo(String request) throws IOException {
+        VideoRequest videoRequest = VideoRequest.builder()
+                .model(VideoModelEnum.WANX_21_T2V_TURBO.getModel())
+                .input(VideoRequest.Input.builder()
+                        .prompt(request)
+                        .build())
+                .parameters(VideoRequest.ParametersExtend.builder()
+                        .promptExtend(true)
+                        .build())
+                .build();
+        VideoResponse response = videoServiceImpl.videoSynthesis(videoRequest);
+        String taskId = response.getOutput().getTask_id();
+        String curStatus = ImageTaskStatusEnum.RUNNING.getCode();
+        qwen.sdk.largemodel.video.model.ResultResponse result = null;
+        int count = 0;
+        int maxCount = 150;
+        // 轮询获取任务结果
+        while (count < maxCount || VideoTaskStatusEnum.RUNNING.getCode().equals(curStatus)) {
+            result = videoServiceImpl.result(taskId);
+            curStatus = result.getOutput().getTask_status();
+            count += 1;
+            log.info("请求次数:{},结果:{}", count, curStatus);
+            if (VideoTaskStatusEnum.SUCCEEDED.getCode().equals(curStatus)) {
+                break;
+            } else if (VideoTaskStatusEnum.FAILED.getCode().equals(curStatus) || VideoTaskStatusEnum.UNKNOWN.getCode().equals(curStatus)) {
+                return QwenResponseEntity.builder()
+                        .result(MessageConstant.VIDEO_FAILED_MESSAGE)
+                        .isText(true)
+                        .build();
+            }
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                return QwenResponseEntity.builder()
+                        .result(MessageConstant.VIDEO_FAILED_MESSAGE)
+                        .isText(true)
+                        .build();
+            }
+        }
+        String url = result.getOutput().getVideo_url();
+        log.info("url:{}", url);
+        return QwenResponseEntity.builder()
+                .result(url)
+                .isVideo(true)
+                .build();
+    }
+
+    @Override
+    public QwenResponseEntity createVideoWithBaseImageUrl(String request, String url) throws IOException {
+        VideoRequest videoRequest = VideoRequest.builder()
+                .model(VideoModelEnum.WANX_21_T2V_TURBO.getModel())
+                .input(VideoRequest.Input.builder()
+                        .imgUrl(url)
+                        .prompt(request)
+                        .build())
+                .parameters(VideoRequest.Parameters.builder()
+                        .promptExtend(true)
+                        .build())
+                .build();
+        VideoResponse response = videoServiceImpl.videoSynthesis(videoRequest);
+        String taskId = response.getOutput().getTask_id();
+        String curStatus = ImageTaskStatusEnum.RUNNING.getCode();
+        qwen.sdk.largemodel.video.model.ResultResponse result = null;
+        int count = 0;
+        int maxCount = 150;
+        // 轮询获取任务结果
+        while (count < maxCount || VideoTaskStatusEnum.RUNNING.getCode().equals(curStatus)) {
+            result = videoServiceImpl.result(taskId);
+            curStatus = result.getOutput().getTask_status();
+            count += 1;
+            log.info("请求次数:{},结果:{}", count, curStatus);
+            if (VideoTaskStatusEnum.SUCCEEDED.getCode().equals(curStatus)) {
+                break;
+            } else if (VideoTaskStatusEnum.FAILED.getCode().equals(curStatus) || VideoTaskStatusEnum.UNKNOWN.getCode().equals(curStatus)) {
+                return QwenResponseEntity.builder()
+                        .result(MessageConstant.VIDEO_FAILED_MESSAGE)
+                        .isText(true)
+                        .build();
+            }
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                return QwenResponseEntity.builder()
+                        .result(MessageConstant.VIDEO_FAILED_MESSAGE)
+                        .isText(true)
+                        .build();
+            }
+        }
+        String newUrl = result.getOutput().getVideo_url();
+        log.info("url:{}", newUrl);
+        return QwenResponseEntity.builder()
+                .result(newUrl)
+                .isVideo(true)
                 .build();
     }
 
@@ -414,7 +519,7 @@ public class QwenRepositoryImpl implements QwenRepository {
             history.put(senderUid, messages);
             return QwenResponseEntity.builder()
                     .result(result)
-                    .isImage(false)
+                    .isText(true)
                     .build();
         } catch (IOException e) {
             messages.remove(messages.size() - 1);
@@ -422,7 +527,7 @@ public class QwenRepositoryImpl implements QwenRepository {
             history.put(senderUid, messages);
             return QwenResponseEntity.builder()
                     .result(MessageConstant.TEXT_FAILED_MESSAGE)
-                    .isImage(false)
+                    .isText(true)
                     .build();
         }
 
@@ -480,7 +585,7 @@ public class QwenRepositoryImpl implements QwenRepository {
             history.put(senderUid, messages);
             return QwenResponseEntity.builder()
                     .result(result)
-                    .isImage(false)
+                    .isText(true)
                     .build();
         } catch (IOException e) {
             messages.remove(messages.size() - 1);
@@ -488,7 +593,7 @@ public class QwenRepositoryImpl implements QwenRepository {
             history.put(senderUid, messages);
             return QwenResponseEntity.builder()
                     .result(MessageConstant.SHARE_FAILED_MESSAGE)
-                    .isImage(false)
+                    .isText(true)
                     .build();
         }
 
@@ -496,8 +601,8 @@ public class QwenRepositoryImpl implements QwenRepository {
 
     /**
      * 根据用户ID获取历史记录
-     * @param userId
-     * @return
+     * @param userId 用户ID
+     * @return 历史记录消息集合
      */
     private List<ChatRequest.Input.Message> getHistory(long userId) {
         return history.computeIfAbsent(userId, this::defaultHistory);
@@ -505,8 +610,8 @@ public class QwenRepositoryImpl implements QwenRepository {
 
     /**
      * 创建初始记录
-     * @param userId
-     * @return
+     * @param userId 用户ID
+     * @return 初始消息集合
      */
     private List<ChatRequest.Input.Message> defaultHistory(long userId) {
         log.info("用户初次对话，创建历史记录:{}", userId);

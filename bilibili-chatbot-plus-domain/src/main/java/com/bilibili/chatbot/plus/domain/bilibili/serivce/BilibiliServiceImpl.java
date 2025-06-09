@@ -4,6 +4,7 @@ import com.bilibili.chatbot.plus.domain.bilibili.BilibiliService;
 import com.bilibili.chatbot.plus.domain.bilibili.adapter.repository.BilibiliRepository;
 import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SendMessageResponseEntity;
 import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SessionsEntity;
+import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SubmitVideoResponseEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -36,6 +37,11 @@ public class BilibiliServiceImpl implements BilibiliService {
     @Override
     public SendMessageResponseEntity sendImageMessage(long senderUid, Integer msgType, String url) throws IOException {
         return bilibiliRepository.sendImageMessage(senderUid, msgType, url);
+    }
+
+    @Override
+    public SubmitVideoResponseEntity uploadVideo(String videoUrl) {
+        return bilibiliRepository.submitVideo(videoUrl);
     }
 
 }

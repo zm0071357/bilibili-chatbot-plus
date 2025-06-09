@@ -9,8 +9,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class QwenResponseEntity<E> {
-    private E result;
+public class QwenResponseEntity {
+    private String result;
+    private boolean isText;
     private boolean isImage;
-
+    private boolean isVideo;
 }

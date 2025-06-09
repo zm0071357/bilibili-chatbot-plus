@@ -3,6 +3,9 @@ package com.bilibili.chatbot.plus.domain.bilibili.model.entity;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 
+/**
+ * B站视频在线解析结果实体
+ */
 @Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AnalysisVideoEntity {

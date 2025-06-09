@@ -11,6 +11,7 @@ public class BilibiliConfigProperties {
 
     private String url;
     private String sendImageUrl;
+    private String sendVideoUrl;
     private long loginId;
     private String cookie;
     private String csrf;
@@ -18,9 +19,5 @@ public class BilibiliConfigProperties {
     private Integer size;
     private String mobiApp;
     private Integer receiverType = 1;
-    private HttpLoggingInterceptor.Level level = HttpLoggingInterceptor.Level.HEADERS;
-    private long connectTimeOut = 60;
-    private long writeTimeOut = 60;
-    private long readTimeOut = 60;
 
 }

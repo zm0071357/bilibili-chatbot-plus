@@ -6,9 +6,7 @@ import lombok.*;
 
 import java.util.List;
 
-@Data
 @Getter
-@Setter
 public class SessionsEntity {
     private int code;
     private String msg;
@@ -28,6 +26,7 @@ public class SessionsEntity {
         private boolean show_level;
 
         @lombok.Data
+        @JsonIgnoreProperties(ignoreUnknown = true)
         public static class SessionList {
             private long talker_id;
             private int session_type;

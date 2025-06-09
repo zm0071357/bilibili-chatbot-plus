@@ -5,6 +5,7 @@ import com.bilibili.chatbot.plus.domain.bilibili.BilibiliService;
 import com.bilibili.chatbot.plus.domain.bilibili.model.entity.MessageContextEntity;
 import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SendMessageResponseEntity;
 import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SessionsEntity;
+import com.bilibili.chatbot.plus.domain.bilibili.model.entity.SubmitVideoResponseEntity;
 import com.bilibili.chatbot.plus.domain.bilibili.model.valobj.*;
 import com.bilibili.chatbot.plus.domain.qwen.QwenService;
 import com.bilibili.chatbot.plus.domain.qwen.model.entity.QwenResponseEntity;
@@ -73,7 +74,7 @@ public class BilibiliChatJob {
 
                     // 发送处理结果
                     // 文字消息
-                    if (!response.isImage()) {
+                    if (response.isText()) {
                         String text = String.valueOf(response.getResult());
                         if (text.length() < 500) {
                             SendMessageResponseEntity sendMessageResponse = bilibiliService.sendTextMessage(senderUid, MessageTypeEnum.TEXT.getType(), text);
@@ -85,10 +86,25 @@ public class BilibiliChatJob {
                                 log.info("给用户发送处理消息:{}, code:{}", senderUid, sendMessageResponse.getCode());
                             }
                         }
-                    } else {
+                    } else if (response.isImage()){
                         // 图片消息
                         String url = String.valueOf(response.getResult());
                         SendMessageResponseEntity sendImageMessageResponse = bilibiliService.sendImageMessage(senderUid, MessageTypeEnum.IMAGE.getType(), url);
+                        log.info("给用户发送处理消息:{}, code:{}", senderUid, sendImageMessageResponse.getCode());
+                    } else if (response.isVideo()) {
+                        // 视频消息
+                        String url = String.valueOf(response.getResult());
+                        // 将视频上传至b站
+                        SubmitVideoResponseEntity submitVideoResponse = bilibiliService.uploadVideo(url);
+                        String text;
+                        SendMessageResponseEntity sendImageMessageResponse;
+                        if (submitVideoResponse.isSuccess()) {
+                            text = "视频生成成功，下载地址：\n" + "\n" + url + "\n" + "\n请复制这段链接后打开任意一个浏览器下载，另外视频已成功投稿至b站，稍等审核通过后即可通过BV号查看生成的视频哦~\n" + "BV号为：" + submitVideoResponse.getResult();
+                            sendImageMessageResponse = bilibiliService.sendTextMessage(senderUid, MessageTypeEnum.TEXT.getType(), text);
+                        } else {
+                            text = "视频生成成功，下载地址：\n" + url + submitVideoResponse.getResult();
+                            sendImageMessageResponse = bilibiliService.sendTextMessage(senderUid, MessageTypeEnum.TEXT.getType(), text);
+                        }
                         log.info("给用户发送处理消息:{}, code:{}", senderUid, sendImageMessageResponse.getCode());
                     }
                 }
@@ -101,8 +117,8 @@ public class BilibiliChatJob {
 
     /**
      * 文本处理
-     * @param text
-     * @return
+     * @param text 文本
+     * @return 文本集合
      */
     private List<String> handleText(String text) {
         List<String> textPieceList = new ArrayList<>();
